@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
+	"github.com/Cheveniko/go-cards/cmd/deploy"
 	"github.com/Cheveniko/go-cards/cmd/form"
 	"github.com/charmbracelet/huh/spinner"
 	"github.com/charmbracelet/lipgloss"
@@ -39,7 +41,7 @@ const (
 	vcfBucket   = "vcf"
 )
 
-// Mi primer programa en Go, no juzgar 🤓
+// My first Go program, don't judge 🤓
 func main() {
 	logo := ` 
   ____          ____              _     
@@ -70,35 +72,39 @@ func main() {
 
 	client, err := supabase.NewClient(SUPABASE_URL, SUPABASE_KEY, nil)
 	if err != nil {
-		fmt.Println("cannot initalize client", err)
+		fmt.Println("Cannot initalize supabase client", err)
 		os.Exit(1)
 	}
 
 	_ = spinner.New().Title("Creando tarjeta...").Action(func() {
+		var base64Image string = ""
 
 		// Edit image name and upload image to storage
-		image, _ := os.Open(cardInfo.ImageUrl)
-		defer image.Close()
+		if cardInfo.ImageUrl != "" {
 
-		newFilename := cardInfo.Slug + filepath.Ext(cardInfo.ImageUrl)
+			image, _ := os.Open(cardInfo.ImageUrl)
+			defer image.Close()
 
-		mimeType := "image/jpeg"
+			newFilename := cardInfo.Slug + filepath.Ext(cardInfo.ImageUrl)
 
-		if filepath.Ext(cardInfo.ImageUrl) == ".png" {
-			mimeType = "image/png"
+			mimeType := "image/jpeg"
+
+			if filepath.Ext(cardInfo.ImageUrl) == ".png" {
+				mimeType = "image/png"
+			}
+
+			_, err = client.Storage.UploadFile(imageBucket, newFilename, image, storage_go.FileOptions{ContentType: &mimeType})
+			if err != nil {
+				fmt.Println("Error uploading image", err)
+				os.Exit(1)
+			}
+
+			imageUrl := client.Storage.GetPublicUrl(imageBucket, newFilename).SignedURL
+
+			base64Image = toBase64(cardInfo.ImageUrl)
+
+			cardInfo.ImageUrl = imageUrl
 		}
-
-		_, err = client.Storage.UploadFile(imageBucket, newFilename, image, storage_go.FileOptions{ContentType: &mimeType})
-		if err != nil {
-			fmt.Println("Error uploading file", err)
-			os.Exit(1)
-		}
-
-		imageUrl := client.Storage.GetPublicUrl(imageBucket, newFilename).SignedURL
-
-		base64Image := toBase64(cardInfo.ImageUrl)
-
-		cardInfo.ImageUrl = imageUrl
 
 		// Create vcf file
 		vcf := `BEGIN:VCARD
@@ -120,13 +126,14 @@ END:VCARD
 		vcfFilename := cardInfo.Slug + ".vcf"
 		_, err = client.Storage.UploadFile(vcfBucket, vcfFilename, reader, storage_go.FileOptions{ContentType: &vcfType})
 		if err != nil {
-			fmt.Println("Error uploading file", err)
+			fmt.Println("Error uploading vcf card", err)
 			os.Exit(1)
 		}
 		vcfUrl := client.Storage.GetPublicUrl(vcfBucket, vcfFilename).SignedURL
 
 		cardInfo.VcfUrl = vcfUrl
 
+		// Insert card info into database
 		_, _, err = client.From("cards").Insert(cardInfo, false, "", "", "exact").Execute()
 		if err != nil {
 			fmt.Println("Error inserting data", err)
@@ -136,5 +143,38 @@ END:VCARD
 	}).Run()
 
 	fmt.Println("Tajeta creada con éxito!")
+
+	// From to ask the user if they want to deploy the app
+	deployForm, deploy := deploy.CreateForm()
+
+	err = deployForm.Run()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	// If the user doesn't want to deploy, exit the program
+	if !deploy.Deploy {
+		fmt.Println("Gracias por usar la aplicación!")
+		os.Exit(0)
+	}
+
+	// Spinner to show the user that the app is being deployed
+	_ = spinner.New().Title("Ejecutando build y deploy...").Action(func() {
+
+		cmd := exec.Command("sh", "-c", "cd /Users/nicolasbaquero/Development/Github/Astro/smart-cards && pnpm build && wrangler pages deploy dist --project-name=smart-cards")
+
+		stdout, err := cmd.Output()
+
+		if err != nil {
+			fmt.Println("Error deploying", err)
+			os.Exit(1)
+		}
+
+		fmt.Println(string(stdout))
+
+	}).Run()
+
+	fmt.Println("\nAplicación desplegada con éxito!")
 
 }
