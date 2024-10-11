@@ -144,7 +144,7 @@ END:VCARD
 
 	fmt.Println("Tajeta creada con éxito!")
 
-	// From to ask the user if they want to deploy the app
+	// Form to ask the user if they want to deploy the app
 	deployForm, deploy := deploy.CreateForm()
 
 	err = deployForm.Run()
@@ -162,7 +162,7 @@ END:VCARD
 	// Spinner to show the user that the app is being deployed
 	_ = spinner.New().Title("Ejecutando build y deploy...").Action(func() {
 
-		cmd := exec.Command("sh", "-c", "cd /Users/nicolasbaquero/Development/Github/Astro/smart-cards && pnpm build && wrangler pages deploy dist --project-name=smart-cards")
+		cmd := exec.Command("sh", "-c", "cd ~/Developer/Github/Astro/smart-cards && pnpm build && wrangler pages deploy dist --project-name=smart-cards")
 
 		stdout, err := cmd.Output()
 
