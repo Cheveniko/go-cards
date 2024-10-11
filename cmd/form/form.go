@@ -12,7 +12,7 @@ type CardInfo struct {
 	Phone         string `json:"phone"`
 	Location      string `json:"location"`
 	GoogleMapsUrl string `json:"google_maps_url"`
-	ImageUrl      string `json:"image_url"`
+	ImagePath     string `json:"image_path"`
 	Slug          string `json:"slug"`
 	Website       string `json:"website"`
 	Linkedin      string `json:"linkedin"`
@@ -74,7 +74,7 @@ func CreateForm() (*huh.Form, *CardInfo) {
 				Value(&cardInfo.Facebook).
 				Placeholder("Facebook"),
 			huh.NewInput().
-				Value(&cardInfo.ImageUrl).
+				Value(&cardInfo.ImagePath).
 				Placeholder("Ruta de la foto de perfil:"),
 			huh.NewInput().
 				Value(&cardInfo.Slug).

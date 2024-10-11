@@ -80,16 +80,21 @@ func main() {
 		var base64Image string = ""
 
 		// Edit image name and upload image to storage
-		if cardInfo.ImageUrl != "" {
+		if cardInfo.ImagePath != "" {
 
-			image, _ := os.Open(cardInfo.ImageUrl)
+			image, err := os.Open(cardInfo.ImagePath)
+			if err != nil {
+				fmt.Println("Error opening image", err)
+				os.Exit(1)
+			}
+
 			defer image.Close()
 
-			newFilename := cardInfo.Slug + filepath.Ext(cardInfo.ImageUrl)
+			newFilename := cardInfo.Slug + filepath.Ext(cardInfo.ImagePath)
 
 			mimeType := "image/jpeg"
 
-			if filepath.Ext(cardInfo.ImageUrl) == ".png" {
+			if filepath.Ext(cardInfo.ImagePath) == ".png" {
 				mimeType = "image/png"
 			}
 
@@ -101,9 +106,9 @@ func main() {
 
 			imageUrl := client.Storage.GetPublicUrl(imageBucket, newFilename).SignedURL
 
-			base64Image = toBase64(cardInfo.ImageUrl)
+			base64Image = toBase64(cardInfo.ImagePath)
 
-			cardInfo.ImageUrl = imageUrl
+			cardInfo.ImagePath = imageUrl
 		}
 
 		// Create vcf file
