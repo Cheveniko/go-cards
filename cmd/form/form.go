@@ -12,7 +12,7 @@ type CardInfo struct {
 	Phone         string `json:"phone"`
 	Location      string `json:"location"`
 	GoogleMapsUrl string `json:"google_maps_url"`
-	ImagePath     string `json:"image_path"`
+	ImageUrl      string `json:"image_url"`
 	Slug          string `json:"slug"`
 	Website       string `json:"website"`
 	Linkedin      string `json:"linkedin"`
@@ -22,6 +22,7 @@ type CardInfo struct {
 	Facebook      string `json:"facebook"`
 	Whatsapp      string `json:"whatsapp"`
 	VcfUrl        string `json:"vcf_url"`
+	Type          string `json:"type"`
 }
 
 func CreateForm() (*huh.Form, *CardInfo) {
@@ -74,11 +75,15 @@ func CreateForm() (*huh.Form, *CardInfo) {
 				Value(&cardInfo.Facebook).
 				Placeholder("Facebook"),
 			huh.NewInput().
-				Value(&cardInfo.ImagePath).
+				Value(&cardInfo.ImageUrl).
 				Placeholder("Ruta de la foto de perfil:"),
 			huh.NewInput().
 				Value(&cardInfo.Slug).
 				Placeholder("Slug"),
+			huh.NewSelect[string]().Title("Tipo de tarjeta").Options(
+				huh.NewOption("Default (compact)", "compact"),
+				huh.NewOption("AEIS", "aeis"),
+			).Value(&cardInfo.Type),
 		),
 	)
 

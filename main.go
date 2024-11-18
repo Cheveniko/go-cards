@@ -80,9 +80,9 @@ func main() {
 		var base64Image string = ""
 
 		// Edit image name and upload image to storage
-		if cardInfo.ImagePath != "" {
+		if cardInfo.ImageUrl != "" {
 
-			image, err := os.Open(cardInfo.ImagePath)
+			image, err := os.Open(cardInfo.ImageUrl)
 			if err != nil {
 				fmt.Println("Error opening image", err)
 				os.Exit(1)
@@ -90,11 +90,11 @@ func main() {
 
 			defer image.Close()
 
-			newFilename := cardInfo.Slug + filepath.Ext(cardInfo.ImagePath)
+			newFilename := cardInfo.Type + "-" + cardInfo.Slug + filepath.Ext(cardInfo.ImageUrl)
 
 			mimeType := "image/jpeg"
 
-			if filepath.Ext(cardInfo.ImagePath) == ".png" {
+			if filepath.Ext(cardInfo.ImageUrl) == ".png" {
 				mimeType = "image/png"
 			}
 
@@ -106,9 +106,9 @@ func main() {
 
 			imageUrl := client.Storage.GetPublicUrl(imageBucket, newFilename).SignedURL
 
-			base64Image = toBase64(cardInfo.ImagePath)
+			base64Image = toBase64(cardInfo.ImageUrl)
 
-			cardInfo.ImagePath = imageUrl
+			cardInfo.ImageUrl = imageUrl
 		}
 
 		// Create vcf file
@@ -128,7 +128,7 @@ END:VCARD
 
 		// Upload vcf file to storage
 		vcfType := "text/vcard"
-		vcfFilename := cardInfo.Slug + ".vcf"
+		vcfFilename := cardInfo.Type + "-" + cardInfo.Slug + ".vcf"
 		_, err = client.Storage.UploadFile(vcfBucket, vcfFilename, reader, storage_go.FileOptions{ContentType: &vcfType})
 		if err != nil {
 			fmt.Println("Error uploading vcf card", err)
@@ -172,7 +172,7 @@ END:VCARD
 		stdout, err := cmd.Output()
 
 		if err != nil {
-			fmt.Println("Error deploying", err)
+			fmt.Println("Error en el deploy", err)
 			os.Exit(1)
 		}
 
@@ -181,5 +181,6 @@ END:VCARD
 	}).Run()
 
 	fmt.Println("\nAplicación desplegada con éxito!")
+	os.Exit(0)
 
 }
