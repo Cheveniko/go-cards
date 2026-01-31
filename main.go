@@ -167,7 +167,7 @@ END:VCARD
 	// Spinner to show the user that the app is being deployed
 	_ = spinner.New().Title("Ejecutando build y deploy...").Action(func() {
 
-		cmd := exec.Command("sh", "-c", "cd ~/Developer/Github/Astro/smart-cards && pnpm build && wrangler pages deploy dist --project-name=smart-cards")
+		cmd := exec.Command("sh", "-c", "cd ~/Developer/smart-cards && pnpm build && pnpx wrangler pages deploy dist --project-name=smart-cards")
 
 		stdout, err := cmd.Output()
 
